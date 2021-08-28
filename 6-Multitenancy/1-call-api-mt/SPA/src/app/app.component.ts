@@ -3,6 +3,7 @@ import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfigur
 import { EventMessage, EventType, InteractionType, PopupRequest, RedirectRequest } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
+import { AuthenticationResult } from '@azure/msal-browser';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +38,10 @@ export class AppComponent implements OnInit, OnDestroy {
       )
       .subscribe((result) => {
         this.checkAccount();
+        // interceptor source code
+        // https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/926f1c2ba0598575e23dfd8cdd8b79fa3a3d19ff/samples/msal-angular-v2-samples/angular10-browser-sample/src/app/msal/msal.interceptor.ts
+        var payload = result.payload as AuthenticationResult;
+        console.log("vlad: here is access token", result, payload.accessToken);
       });
   }
 
