@@ -1,3 +1,4 @@
+// https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/926f1c2ba0598575e23dfd8cdd8b79fa3a3d19ff/samples/msal-angular-v2-samples/angular10-browser-sample/src/app/msal/msal.interceptor.ts
 import {
   HttpRequest,
   HttpHandler,
@@ -19,11 +20,17 @@ export type MsalInterceptorConfig = {
 };
 
 @Injectable()
-export class CustomMsalInterceptor implements HttpInterceptor {
+export class AzureMsalInterceptor implements HttpInterceptor {
+  urlsToUse: Array<string>;
   constructor(
       @Inject(MSAL_INTERCEPTOR_CONFIG) private msalInterceptorConfig: MsalInterceptorConfig,
       private authService: MsalService
-  ) {}
+  ) {
+    this.urlsToUse= [
+      'azure/.+',
+     // 'myController1/myAction3'
+    ];
+  }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
       const scopes = this.getScopesForEndpoint(req.url);
@@ -45,14 +52,32 @@ export class CustomMsalInterceptor implements HttpInterceptor {
                   return EMPTY;
               }),
               switchMap((result: AuthenticationResult) => {
-                  const headers = req.headers
+                  if (this.isValidRequestForInterceptor(req.url)) {
+                    const headers = req.headers
                       .set('Authorization', `Bearer ${result.accessToken}`);
 
-                  const requestClone = req.clone({headers});
-                  return next.handle(requestClone);
+                    const requestClone = req.clone({headers});
+                    return next.handle(requestClone);
+                  }
+                  return next.handle(req);
               })
           );
 
+  }
+
+  // https://stackoverflow.com/questions/55522320/angular-interceptor-exclude-specific-urls
+  private isValidRequestForInterceptor(requestUrl: string): boolean {
+    let positionIndicator: string = 'api/';
+    let position = requestUrl.indexOf(positionIndicator);
+    if (position > 0) {
+      let destination: string = requestUrl.substr(position + positionIndicator.length);
+      for (let address of this.urlsToUse) {
+        if (new RegExp(address).test(destination)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private getScopesForEndpoint(endpoint: string): Array<string>|undefined {
