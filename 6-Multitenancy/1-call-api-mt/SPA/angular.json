@@ -126,5 +126,8 @@
       }
     }
   },
-  "defaultProject": "angular11-sample-app"
+  "defaultProject": "angular11-sample-app",
+  "cli": {
+    "analytics": false
+  }
 }
